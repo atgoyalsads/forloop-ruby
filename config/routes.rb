@@ -1,5 +1,12 @@
 Jets.application.routes.draw do
-  root "jets/public#show"
+  root 'welcomes#index'
+  # root "jets/public#show"
+
+  namespace :admin do
+  	get  "login", to: "sessions#new"
+  	post "login", to: "sessions#create"
+  	get "logout", to: "sessions#destroy"
+  end
 
   # The jets/public#show controller can serve static utf8 content out of the public folder.
   # Note, as part of the deploy process Jets uploads files in the public folder to s3
