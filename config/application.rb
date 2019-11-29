@@ -61,4 +61,7 @@ Jets.application.configure do
   # testing suite output readable.
   # config.logger = Jets::Logger.new($strerr)
 
+  Mongoid.load!(Jets.root.join('config', 'mongoid.yml'))
+
+
 end

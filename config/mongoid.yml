@@ -1,0 +1,6 @@
+development:
+  clients:
+    default:
+      uri: mongodb+srv://tecorb:test%4012345@awsdemoapp-xsdmp.mongodb.net/test?retryWrites=true&w=majority
+      options:
+        server_selection_timeout: 5
