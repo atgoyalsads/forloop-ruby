@@ -9,6 +9,7 @@ gem "dynomite"
 
 gem 'mongoid', '~> 7.0.5'
 
+gem 'bcrypt-ruby', :require => 'bcrypt'
 
 # development and test groups are not bundled as part of the deployment
 group :development, :test do

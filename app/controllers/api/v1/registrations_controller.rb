@@ -12,8 +12,17 @@ class Api::V1::RegistrationsController < Api::V1::ApplicationController
 		end	
 	end
 
+	def login
+		user = User.authenticate(params[:email], params[:password])
+	  if user
+	    render json: {code: 200, message: "Login successful", data: user}
+	  else
+	  	render json: {code: 401, message: "Invalid email or password"}
+	  end
+	end
+
 	private
 	def params_permit
-		params.require(:user).permit(:fname, :lname, :email)	
+		params.require(:user).permit(:fname, :lname, :email,:password)	
 	end
 end
