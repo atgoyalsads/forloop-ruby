@@ -11,7 +11,18 @@ Jets.application.routes.draw do
   namespace :api do 
   	namespace :v1 do
   		post "signup", to: "registrations#create"
-      post "login", to: "registrations#login"
+      post "login", to: "sessions#create"
+
+      post "seed/data/insert", to: "sessions#seedData"
+      # Profile Data routes
+      get "session/details", to: "profiles#show"
+      post "update/pic", to: "profiles#upload_pic"
+      post "update/profile", to: "profiles#update_profile"
+      post "update/links", to: "profiles#update_links"
+      post "update/details", to: "profiles#update_details"
+      post "update/subcategories", to: "profiles#update_subcategories"
+      post "categories", to: "profiles#categories"
+      post "subcategories", to: "profiles#subcategories_list"
   	end
   end
 

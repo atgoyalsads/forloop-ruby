@@ -11,6 +11,9 @@ gem 'mongoid', '~> 7.0.5'
 
 gem 'bcrypt-ruby', :require => 'bcrypt'
 
+gem 'will_paginate', '~> 3.1.0'
+ 
+
 # development and test groups are not bundled as part of the deployment
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

@@ -5,6 +5,21 @@ class User
   field :fname, type: String
   field :lname, type: String
   field :email, type: String
+  field :displayName, type: String
+  field :image, type: String
+  field :address, type: String
+  field :countryCode, type: String
+  field :contact, type: String
+  field :linkBlogger, type: String
+  field :linkLinkedin, type: String
+  field :linkInstagram, type: String
+  field :linkPinterest, type: String
+  field :description, type: String
+  field :certificate1, type: String
+  field :certificate2, type: String
+  field :experience, type: String
+  field :pricePerMinutes, type: Float
+
   # For bcrypt-ruby Begin======================
   field :password_hash, type: String
   field :password_salt, type: String
@@ -35,9 +50,18 @@ class User
   # For bcrypt-ruby End----------------------
 
   # Model Validation Begin===================
-  validates :fname, :email, presence: true
+  validates :email, presence: true
   validates :email, uniqueness: true
+  validates_presence_of :password, :on => :create
   # Model Validation End----------------------
 
+  # associations
+  has_many :subcategory_users, dependent: :destroy
+  # has_many :subcategories, through: :subcategory_users
+  has_many :sessions, dependent: :destroy
+
+  def id
+    self._id.as_json["$oid"]
+  end
 
 end

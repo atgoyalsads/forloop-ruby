@@ -1,9 +1,10 @@
 class Api::V1::RegistrationsController < Api::V1::ApplicationController
 	def create
 		begin
-			user = User.new(params_permit)
+			user = User.new(signup_params)
 			if user.save
-				render json: {code: 200, message: "Signup successful", data: user}
+				session = user.sessions.create(deviceId: params[:deviceId], deviceType: params[:deviceType])
+				render json: {code: 200, message: "Signup successful", user: user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge(sessionToken: session.sessionToken)}
 			else
 				render json: {code: 401, message: user.errors.full_messages.join(", ")}
 			end
@@ -12,17 +13,8 @@ class Api::V1::RegistrationsController < Api::V1::ApplicationController
 		end	
 	end
 
-	def login
-		user = User.authenticate(params[:email], params[:password])
-	  if user
-	    render json: {code: 200, message: "Login successful", data: user}
-	  else
-	  	render json: {code: 401, message: "Invalid email or password"}
-	  end
-	end
-
 	private
-	def params_permit
-		params.require(:user).permit(:fname, :lname, :email,:password)	
+	def signup_params
+		params.require(:user).permit(:email,:password)	
 	end
 end
