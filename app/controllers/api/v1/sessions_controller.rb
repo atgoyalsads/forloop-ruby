@@ -9,6 +9,10 @@ class Api::V1::SessionsController < Api::V1::ApplicationController
 	  end
 	end
 
+	def test
+	  	render json: {code: 200, message: "Ok"}
+	end
+
 	def seedData
 		cats = ["Server","Programming","Mobile Apps","Web Apps","Javascript"]
 		subcats = [ ["aws","atlassian.net","digital Ocian","heroku"],
