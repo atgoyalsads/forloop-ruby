@@ -7,9 +7,11 @@ class User
   field :email, type: String
   field :displayName, type: String
   field :image, type: String
-  field :address, type: String
+  field :zipcode, type: String
   field :countryCode, type: String
   field :contact, type: String
+  field :dob, type: Date
+  field :gender, type: String
   field :linkBlogger, type: String
   field :linkLinkedin, type: String
   field :linkInstagram, type: String
@@ -17,8 +19,8 @@ class User
   field :description, type: String
   field :certificate1, type: String
   field :certificate2, type: String
-  field :experience, type: String
-  field :pricePerMinutes, type: Float
+  field :pricePerHour, type: Float
+  field :selectedRole, type: String
 
   # For bcrypt-ruby Begin======================
   field :password_hash, type: String

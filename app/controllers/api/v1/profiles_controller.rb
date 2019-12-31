@@ -2,7 +2,14 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	before_action :validateSession
 
 	def show
-	  render json: {code: 200, message: "Record Found", user: @user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id])}		
+		proData = proScreensStatus(@user)
+	  render json: {code: 200, message: "Record Found", user: @user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge({proDataStatus: proData,sessionToken: request.headers["sessiontoken"]})}		
+	end
+
+	def update_role
+		@user.update(selectedRole: params[:selectedRole]=="pro" ? "pro" : "learner")
+		proData = proScreensStatus(@user)
+	  render json: {code: 200, message: "Record Found", user: @user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge({proDataStatus: proData,sessionToken: request.headers["sessiontoken"]})}
 	end
 
 	def upload_pic
@@ -15,8 +22,8 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	end
 
 	def update_profile
-		@user.update(fname: params[:fname], lname: params[:lname], address: params[:address], countryCode: params[:countryCode], contact: params[:contact])
-	  render json: {code: 200, message: "Record updated", user: @user.as_json(only: [:fname, :lname, :address, :countryCode, :contact])}
+		@user.update(fname: params[:fname], lname: params[:lname], zipcode: params[:zipcode], countryCode: params[:countryCode], contact: params[:contact], dob: params[:dob], gender: params[:gender])
+	  render json: {code: 200, message: "Record updated", user: @user.as_json(only: [:fname, :lname, :zipcode, :countryCode, :contact, :gender, :dob])}
 	end
 
 	def update_links
@@ -25,14 +32,14 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	end
 
 	def update_details
-		@user.update(description: params[:description], experience: params[:experience], pricePerMinutes: params[:pricePerMinutes])
+		@user.update(description: params[:description], pricePerHour: params[:pricePerHour])
 		if params[:certificate1].present?
 	  	@user.update(certificate1: params[:certificate1])
 	  end
 	  if params[:certificate2].present?
 	  	@user.update(certificate2: params[:certificate2])
 	  end
-	  render json: {code: 200, message: "Record updated", user: @user.as_json(only: [:description,:certificate1,:certificate2,:experience,:pricePerMinutes])}
+	  render json: {code: 200, message: "Record updated", user: @user.as_json(only: [:description,:certificate1,:certificate2,:pricePerHour])}
 	end
 
 	def categories

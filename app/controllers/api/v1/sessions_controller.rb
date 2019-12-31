@@ -2,8 +2,9 @@ class Api::V1::SessionsController < Api::V1::ApplicationController
 	def create
 		user = User.authenticate(params[:email], params[:password])
 	  if user
+	  	proData = proScreensStatus(user)
 	  	session = user.sessions.create(deviceId: params[:deviceId], deviceType: params[:deviceType])
-	    render json: {code: 200, message: "Login successful", user: user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge(sessionToken: session.sessionToken)}
+	    render json: {code: 200, message: "Login successful", user: user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge({proDataStatus: proData,sessionToken: session.sessionToken})}
 	  else
 	  	render json: {code: 401, message: "Invalid email or password"}
 	  end

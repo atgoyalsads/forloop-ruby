@@ -13,10 +13,11 @@ Jets.application.routes.draw do
   		post "signup", to: "registrations#create"
       post "login", to: "sessions#create"
       post "test", to: "sessions#test"
-      # post "seed/data/insert", to: "sessions#seedData"
+      post "seed/data/insert", to: "sessions#seedData"
       # Profile Data routes
 
       get "session/details", to: "profiles#show"
+      post "update/role", to: "profiles#update_role"
       post "update/pic", to: "profiles#upload_pic"
       post "update/profile", to: "profiles#update_profile"
       post "update/links", to: "profiles#update_links"
