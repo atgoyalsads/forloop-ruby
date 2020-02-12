@@ -17,11 +17,10 @@ class User
   field :linkInstagram, type: String
   field :linkPinterest, type: String
   field :description, type: String
-  field :certificate1, type: String
-  field :certificate2, type: String
+  field :certificates, type: Array, default: []
   field :pricePerHour, type: Float
   field :selectedRole, type: String
-
+  field :proDataStatus, type: Hash
   # For bcrypt-ruby Begin======================
   field :password_hash, type: String
   field :password_salt, type: String
@@ -44,6 +43,7 @@ class User
   end
 
   def encrypt_password
+    self.proDataStatus = {displayName: false, details: false, links: false, price: false, subcategories: false}
     if password.present?
       self.password_salt = BCrypt::Engine.generate_salt
       self.password_hash = BCrypt::Engine.hash_secret(password, password_salt)
@@ -59,11 +59,14 @@ class User
 
   # associations
   has_many :subcategory_users, dependent: :destroy
-  # has_many :subcategories, through: :subcategory_users
   has_many :sessions, dependent: :destroy
 
   def id
     self._id.as_json["$oid"]
+  end
+
+  def skills
+    Subcategory.where(:_id.in => self.subcategory_users.pluck(:subcategory_id)).paginate(page: 1, per_page: 3).pluck(:title)
   end
 
 end

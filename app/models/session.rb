@@ -11,7 +11,7 @@ class Session
 	before_create :generateSessionToken
 
 	def generateSessionToken
-		self.sessionToken = generateToken
+		self.sessionToken =  generateToken if !self.sessionToken.present?
 	end
 
 	def generateToken

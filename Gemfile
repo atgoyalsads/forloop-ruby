@@ -13,6 +13,7 @@ gem 'bcrypt-ruby', :require => 'bcrypt'
 
 gem 'will_paginate', '~> 3.1.0'
  
+gem 'twilio-ruby'
 
 # development and test groups are not bundled as part of the deployment
 group :development, :test do

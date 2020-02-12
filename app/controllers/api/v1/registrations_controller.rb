@@ -3,7 +3,7 @@ class Api::V1::RegistrationsController < Api::V1::ApplicationController
 		begin
 			user = User.new(signup_params)
 			if user.save
-				session = user.sessions.create(deviceId: params[:deviceId], deviceType: params[:deviceType])
+				session = Session.create(user_id: user, deviceId: params[:deviceId], deviceType: params[:deviceType])
 				render json: {code: 200, message: "Signup successful", user: user.as_json(except:[:created_at,:updated_at,:password_hash,:password_salt,:_id]).merge(sessionToken: session.sessionToken)}
 			else
 				render json: {code: 401, message: user.errors.full_messages.join(", ")}

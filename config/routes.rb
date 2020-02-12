@@ -4,18 +4,19 @@ Jets.application.routes.draw do
 
   namespace :admin do
   	get  "login", to: "sessions#new"
-  	post "login", to: "sessions#create"
+  	# post "login", to: "sessions#create"
   	get "logout", to: "sessions#destroy"
   end
 
   namespace :api do 
   	namespace :v1 do
+      #Auth Routes
   		post "signup", to: "registrations#create"
-      post "login", to: "sessions#create"
-      post "test", to: "sessions#test"
-      post "seed/data/insert", to: "sessions#seedData"
-      # Profile Data routes
+      # post "login", to: "sessions#create"
+      post "register/token", to: "sessions#registerToken"
+      get "logout", to: "sessions#logout"
 
+      # Profile Data routes
       get "session/details", to: "profiles#show"
       post "update/role", to: "profiles#update_role"
       post "update/pic", to: "profiles#upload_pic"
@@ -23,8 +24,18 @@ Jets.application.routes.draw do
       post "update/links", to: "profiles#update_links"
       post "update/details", to: "profiles#update_details"
       post "update/subcategories", to: "profiles#update_subcategories"
-      post "categories", to: "profiles#categories"
       post "subcategories", to: "profiles#subcategories_list"
+
+      # Dashboard Routes
+      post "dashboard/seeker", to: "dashboards#seeker"
+      post "dashboard/subcategory/pros", to: "dashboards#subcategoryUsers"
+      post "search/pros", to: "dashboards#searchProUsers"
+
+      # Call routes
+      post "twilio/access/token", to: "twilios#accessToken"
+      post "seeker/make/call", to: "twilios#makeCall"
+
+      
   	end
   end
 

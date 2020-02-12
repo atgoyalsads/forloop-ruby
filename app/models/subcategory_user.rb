@@ -2,6 +2,7 @@ class SubcategoryUser
 	include Mongoid::Document
   include Mongoid::Timestamps
 
+  	belongs_to :category
 	belongs_to :subcategory
 	belongs_to :user
 
