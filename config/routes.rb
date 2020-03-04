@@ -38,6 +38,9 @@ Jets.application.routes.draw do
       post "seeker/place/call", to: "twilios#placeCall"
       post "seeker/calling", to: "twilios#makeCall"
       
+      # Favourites
+      post "favourites/add", to: "favourites#create"
+      post "favourites/list", to: "favourites#list"
 
   	end
   end
