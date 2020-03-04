@@ -36,8 +36,8 @@ class Api::V1::DashboardsController < Api::V1::ApplicationController
 			searchterm = params[:keyword].to_s
 			cats = Category.where({ :title => /.*#{searchterm}.*/i }).paginate(page: 1, per_page: 10).pluck(:id)
 			subcats = Subcategory.any_of({ :title => /.*#{searchterm}.*/i }, :category_id.in => cats).paginate(page: 1, per_page: 10).pluck(:id)
-	  	userIds = SubcategoryUser.where(:subcategory_id.in => subcats).order(updated_at: "DESC").distinct(:user_id).paginate(page: 1, per_page: 10)
-	  	users = User.where(:_id.in=>userIds).paginate(page: params[:page], per_page: params[:per_page])
+	  	userIds = SubcategoryUser.where(:subcategory_id.in => subcats).order(updated_at: "DESC").distinct(:user_id).paginate(page: params[:page], per_page: params[:per_page])
+	  	users = User.where(:_id.in=>userIds)
 	  	render json: {code: 200, users: users.as_json(only: [:displayName, :image, :description, :pricePerHour], methods: [:id, :skills])}
 		rescue Exception => e
 	  	render json: {code: 401, message: "Category does not exists"}

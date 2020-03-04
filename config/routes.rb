@@ -33,9 +33,12 @@ Jets.application.routes.draw do
 
       # Call routes
       post "twilio/access/token", to: "twilios#accessToken"
-      post "seeker/make/call", to: "twilios#makeCall"
-
+      get "twilio/access/token", to: "twilios#accessToken"
+      post "twilio/capability/token", to: "twilios#capabilityToken"
+      post "seeker/place/call", to: "twilios#placeCall"
+      post "seeker/calling", to: "twilios#makeCall"
       
+
   	end
   end
 

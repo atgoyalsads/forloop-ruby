@@ -61,12 +61,29 @@ class User
   has_many :subcategory_users, dependent: :destroy
   has_many :sessions, dependent: :destroy
 
+  has_many :dialedCalls, class_name: "CallHistory", inverse_of: :dialer, dependent: :destroy
+  has_many :receivedCalls, class_name: "CallHistory", inverse_of: :receiver, dependent: :destroy
+
+  has_many :rating_questions, dependent: :destroy
+  has_many :received_rating_questions, class_name: "RatingQuestion", inverse_of: :receiver, dependent: :destroy
+
+  has_many :favourites, dependent: :destroy
+  has_many :in_favourites, class_name: "Favourite", inverse_of: :favouriteUser, dependent: :destroy
+
   def id
     self._id.as_json["$oid"]
   end
 
   def skills
     Subcategory.where(:_id.in => self.subcategory_users.pluck(:subcategory_id)).paginate(page: 1, per_page: 3).pluck(:title)
+  end
+
+  def callHistories
+    CallHistory.any_of({:dialerUserId => self._id}, {:receiverUserId => self._id})
+  end
+
+  def favouriteProfiles
+    User.where(:_id.in=>self.favourites.pluck(:favouriteUserId))
   end
 
 end
