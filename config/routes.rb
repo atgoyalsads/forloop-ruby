@@ -31,13 +31,20 @@ Jets.application.routes.draw do
       post "dashboard/subcategory/pros", to: "dashboards#subcategoryUsers"
       post "search/pros", to: "dashboards#searchProUsers"
 
-      # Call routes
+      # Call Twillio routes
       post "twilio/access/token", to: "twilios#accessToken"
       get "twilio/access/token", to: "twilios#accessToken"
       post "twilio/capability/token", to: "twilios#capabilityToken"
       post "seeker/place/call", to: "twilios#placeCall"
       post "seeker/calling", to: "twilios#makeCall"
       
+      # Call APIs
+      post "call/initiated", to: "call_histories#callInitiated"
+      post "call/connected", to: "call_histories#callConnected"
+      post "call/picked", to: "call_histories#callPicked"
+      post "call/ended", to: "call_histories#callEnded"
+      post "call/history", to: "call_histories#callHistory"
+
       # Favourites
       post "favourites/add", to: "favourites#create"
       post "favourites/list", to: "favourites#list"
