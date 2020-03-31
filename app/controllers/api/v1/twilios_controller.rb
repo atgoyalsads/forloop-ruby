@@ -1,101 +1,58 @@
 class Api::V1::TwiliosController < Api::V1::ApplicationController
-	# @@account_sid = "ACe561da15ef8d3bc3329f8aceeff96ab9" # Your Test Account SID from www.twilio.com/console/settings
-	# @@auth_token = "a5b699bc42e207c0c39a73b6b5502ce8"   # Your Test Auth Token from www.twilio.com/console/settings
-
-	@@account_sid = "ACa101d200c74506c238f2f7bd016d9132" # Live
-	@@auth_token = "00b94f6add60f8e0e17b055142021e9c"	# Live
-																											# https://www.twilio.com/console/voice/project/test-credentials
-	
-	@@api_key = "SKe712dbf5b8c48131c88a64bbb3c59c0c"
-	@@secret_key = "1RwGI02T72CabDcjMTEZ7USi0sVh0ssP"  # API Secret key, generated and shown only once when we create the project on twilio, we need to save this in safe place
-	@@outgoing_application_sid = "AP85e7c9f435eae913ebb5f6b9f89814fd"
-	@@identity = 'alice'
-
-	before_action :clientPrepare, except: [:capabilityToken]
+	before_action :validateSession, only: [:placeCall]
+	before_action :clientPrepare, except: [:makeCall, :callResponseFromTwillio]
 	require 'twilio-ruby'
-	
-	def accessToken
-		begin
-			# Create Voice grant for our token
-			grant = Twilio::JWT::AccessToken::VoiceGrant.new
-			grant.outgoing_application_sid = @@outgoing_application_sid
-
-			# Optional: add to allow incoming calls
-			grant.incoming_allow = true
-
-			token = Twilio::JWT::AccessToken.new(
-			  @@account_sid,
-			  @@api_key,
-			  @@secret_key,
-			  [grant],
-			  identity: params[:identity]
-			)
-
-			# Generate the token
-			# puts token.to_jwt
-
-			render json: {code: 200, token: token.to_jwt}
-		rescue Exception => e
-			render json: {code: 400, message: e}
-		end
-	end
-
-	# Calling from one client to another requires that you provide both the incoming and outgoing capabilities in the Capability Token.
-	# Ref: https://www.twilio.com/docs/voice/client/tutorials/calls-between-devices	
-	def  capabilityToken
-		begin
-		  # set up
-			capability = Twilio::JWT::ClientCapability.new @@account_sid, @@auth_token
-
-			# allow outgoing calls to an application
-			outgoing_scope = Twilio::JWT::ClientCapability::OutgoingClientScope.new @@outgoing_application_sid
-			capability.add_scope(outgoing_scope)
-
-			# allow incoming calls to 'andrew'
-			incoming_scope = Twilio::JWT::ClientCapability::IncomingClientScope.new params[:clientName]
-			capability.add_scope(incoming_scope)
-
-			# generate the token string
-			token = capability.to_s
-			render json: {code: 200, token: token}
-			
-		rescue Exception => e
-			render json: {code: 400, message: e}
-		end
-	end
-
-	def sendMessage
-		begin
-			message = @client.messages.create(
-		    body: "Hello from Ruby",
-		    to: params[:contactNumber],    # Replace with your phone number
-		    # from: "+15005550006" # Test    # Use this Magic Number for creating SMS
-		    from: "+19175405556" #Live
-		    )  
-			render json: {code: 200, result: {account_sid: message.account_sid, sid: message.sid, to: message.to, from: message.from}}
-		rescue Exception => e
-			render json: {code: 400, message: e}
-		end
-	end
 
 	def placeCall
 		begin
+			receiver = User.find_by(_id: params[:proId])
 			callObj = @client.calls.create(
-		    to: params[:contactNumber],
+		    to: "#{receiver.countryCode}#{receiver.contact}",
 		    # from: "+15005550006", #Test
 		    from: "+19175405556", #Live
-		    url: "http://demo.twilio.com/docs/voice.xml")
-		    render plain: callObj.sid
-			# render json: {code: 200, result: {account_sid: callObj.account_sid, sid: callObj.sid, to: callObj.to, from: callObj.from}}
+		    url: "http://demo.twilio.com/docs/voice.xml",
+		    status_callback: 'https://43ad1af4vf.execute-api.us-west-2.amazonaws.com/dev/api/v1/twilio/call/response',
+       	status_callback_event: ['initiated','ringing', 'answered', 'completed'],
+       	status_callback_method: 'POST',
+		    )
+		    call = CallHistory.create(dialerUserId: @user._id, receiverUserId: receiver._id, pricePerHour: receiver.pricePerHour.to_f, totalPrice: 0.0, callCategory: params[:callCategory], callId: callObj.sid)
+				render json: {code: 200, callObjId: callObj.sid, call: call.as_json({except: [:_id, :dialerUserId, :receiverUserId], methods: [:id] }) }
 		rescue Exception => e
-			render plain: ""
+			render json: {code: 404, message: e}
+			# render plain: e
 		end
 	end
 
 	def makeCall
 		response = Twilio::TwiML::VoiceResponse.new
-		response.say(message: 'Hello Dear. Thanks for calling here. If you would called me earlier. Then Till now I would be there.')
+		response.say(message: 'Hello. Hope you are doing good! by the way thanks for being there to help me, I have couple of questions to discuss with you over this call. Nice to talk to you. I would also rate you after this call.')
 		render xml: response.to_s
+	end
+
+	def callResponseFromTwillio
+		begin
+			call = CallHistory.find_by(callId: params[:CallSid])
+			case params[:CallStatus]
+			when "initiated"
+				call.set(callStatus: "initiated", updated_at: Time.current)
+			when "ringing"
+				call.set(callStatus: "connected", connectedAt: Time.current, updated_at: Time.current)
+			when "in-progress"
+				call.set(callStatus: "in-progress", pickedAt: Time.current, updated_at: Time.current)
+			when "completed"
+				endAt = Time.current
+				durationMinutes = call.pickedAt.present? ? ((endAt-call.pickedAt)/60).round(1) : 0
+				totalPrice = durationMinutes*(call.pricePerHour/60)
+				
+				call.set(callStatus: "completed", completedAt: endAt, updated_at: Time.current, totalPrice: totalPrice, durationMinutes: durationMinutes)
+			else
+				call.set(callStatus: params[:CallStatus], updated_at: Time.current)
+			end
+			render json: {code: 200}	
+		rescue Exception => e
+			render json: {code: 404, message: "Call not found"}	
+		end
+		
 	end
 
 	private

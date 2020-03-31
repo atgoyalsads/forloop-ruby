@@ -15,6 +15,9 @@ gem 'will_paginate', '~> 3.1.0'
  
 gem 'twilio-ruby'
 
+gem 'stripe'
+
+
 # development and test groups are not bundled as part of the deployment
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

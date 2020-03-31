@@ -17,10 +17,13 @@ class User
   field :linkInstagram, type: String
   field :linkPinterest, type: String
   field :description, type: String
-  field :certificates, type: Array, default: []
+  field :certificates, type: Array
   field :pricePerHour, type: Float
   field :selectedRole, type: String
   field :proDataStatus, type: Hash
+  field :stripeCustomerId, type: String
+  field :skillSet, type: Array
+
   # For bcrypt-ruby Begin======================
   field :password_hash, type: String
   field :password_salt, type: String
@@ -75,7 +78,16 @@ class User
   end
 
   def skills
-    Subcategory.where(:_id.in => self.subcategory_users.pluck(:subcategory_id)).paginate(page: 1, per_page: 3).pluck(:title)
+    # Subcategory.where(:_id.in => self.subcategory_users.pluck(:subcategory_id)).paginate(page: 1, per_page: 3).pluck(:title)
+    self.skillSet.to_a.first(3).map { |sks| sks["subcategoryTitle"] }
+  end
+
+  def allSkills
+    self.skillSet.to_a.map { |sks| sks["subcategoryTitle"] }
+  end
+
+  def skillsJson
+    self.skillSet.to_a.map { |sks| {title: sks["subcategoryTitle"], id: sks["subcategoryId"].to_s }}
   end
 
   def callHistories
@@ -84,6 +96,44 @@ class User
 
   def favouriteProfiles
     User.where(:_id.in=>self.favourites.pluck(:favouriteUserId))
+  end
+
+  def callsDataHome
+    data = CallHistory.where(receiverUserId: self._id).pluck(:callRating, :askedQuestions)
+    allCallQuestionsRatings = []
+    allCallRatings = []
+    data.map { |dt| 
+      if dt[0].to_f>0
+        callQuRatings = dt[1].to_a.map { |rq| rq["rating"].to_f}
+        avgCallRating = ((dt[0].to_f+callQuRatings.sum)/(callQuRatings.count+1)).round(1)
+        allCallRatings << avgCallRating
+      end
+    }
+    totalReviews = allCallRatings.count
+    avgRate = allCallRatings.count>0 ? ((allCallRatings.sum)/allCallRatings.count).round(1) : 0
+    { totalReviews: totalReviews, totalCalls: data.count, avgRating: avgRate}
+  end
+
+  def callsDataDetail
+    data = CallHistory.where(receiverUserId: self._id).pluck(:totalPrice,:durationMinutes,:callRating,:askedQuestions)
+    allCallsAmount = []
+    allCallsMinutes = []
+    allCallRatings = []
+    allCallQuestionsRatings = []
+    data.map {|dt| 
+      allCallsAmount << dt[0].to_f
+      allCallsMinutes << dt[1].to_f
+      if dt[2].to_f>0
+        callQuRatings = dt[3].to_a.map { |rq| rq["rating"].to_f}
+        avgCallRating = ((dt[2].to_f+callQuRatings.sum)/(callQuRatings.count+1)).round(1)
+        allCallRatings << avgCallRating
+      end
+    }
+    avgAmount = allCallsAmount.count<=0 ? 0 : (allCallsAmount.sum/allCallsAmount.count).round(2)
+    avgMinutes = allCallsMinutes.count<=0 ? 0 : (allCallsMinutes.sum/allCallsMinutes.count).round(2)
+    totalReviews = allCallRatings.count
+    avgRate = allCallRatings.count>0 ? ((allCallRatings.sum)/allCallRatings.count).round(1) : 0
+    { avgAmount: avgAmount, avgMinutes: avgMinutes, totalReviews: totalReviews, totalCalls:  data.count, avgRating: avgRate}
   end
 
 end
