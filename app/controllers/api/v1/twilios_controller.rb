@@ -1,17 +1,18 @@
 class Api::V1::TwiliosController < Api::V1::ApplicationController
 	before_action :validateSession, only: [:placeCall]
-	before_action :clientPrepare, except: [:makeCall, :callResponseFromTwillio]
+	before_action :clientPrepare, except: [:makeCall, :twiml, :callResponseFromTwillio]
 	require 'twilio-ruby'
 
 	def placeCall
 		begin
+			deployedURL = "https://ekye3h3x7g.execute-api.us-west-2.amazonaws.com/dev"
 			receiver = User.find_by(_id: params[:proId])
 			callObj = @client.calls.create(
 		    to: "#{receiver.countryCode}#{receiver.contact}",
 		    # from: "+15005550006", #Test
 		    from: "+19175405556", #Live
-		    url: "http://demo.twilio.com/docs/voice.xml",
-		    status_callback: 'https://43ad1af4vf.execute-api.us-west-2.amazonaws.com/dev/api/v1/twilio/call/response',
+		    url: "#{deployedURL}/api/v1/seeker/twiml?contact=#{receiver.countryCode}#{receiver.contact}",
+		    status_callback: "#{deployedURL}/api/v1/twilio/call/response",
        	status_callback_event: ['initiated','ringing', 'answered', 'completed'],
        	status_callback_method: 'POST',
 		    )
@@ -23,9 +24,18 @@ class Api::V1::TwiliosController < Api::V1::ApplicationController
 		end
 	end
 
+	def twiml
+		response = "<Response> <Dial callerId=\"+19175405556\"> <Number> +#{params[:contact].to_s.gsub("+","")} </Number> </Dial> </Response>"
+		# response = Twilio::TwiML::VoiceResponse.new
+		# response.dial(number: "+917834821711")
+		render xml: response.to_s
+	end
+
 	def makeCall
-		response = Twilio::TwiML::VoiceResponse.new
-		response.say(message: 'Hello. Hope you are doing good! by the way thanks for being there to help me, I have couple of questions to discuss with you over this call. Nice to talk to you. I would also rate you after this call.')
+		# response = Twilio::TwiML::VoiceResponse.new
+		# response.say(message: 'Hello. Hope you are doing good! by the way thanks for being there to help me, I have couple of questions to discuss with you over this call. Nice to talk to you. I would also rate you after this call.')
+		response = "<Response> </Response>"
+		
 		render xml: response.to_s
 	end
 

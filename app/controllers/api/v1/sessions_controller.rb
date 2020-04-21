@@ -12,6 +12,7 @@ class Api::V1::SessionsController < Api::V1::ApplicationController
 	def registerToken
 		user = User.find_by(email: params[:email])
 	  if user and params[:sessionToken].present?
+	  	user.set({"deactivated": false}) if user.deactivated
 	  	begin
 	  		session = Session.find_by(sessionToken: params[:sessionToken])
 	  		# find_by will cause exception in case of record not found 
@@ -27,8 +28,7 @@ class Api::V1::SessionsController < Api::V1::ApplicationController
 
 	def logout
 		begin
-			session = Session.find_by(sessionToken: request.headers["sessiontoken"])
-			session.destroy
+			@session.destroy
 			render :json =>  {code: 200, message: "Signout successful"}         
 		rescue Exception => e
 			render :json =>  {code: 420, message: "Invalid Session Token"}         

@@ -46,8 +46,7 @@ class CallHistory
   end
 
   def reviewedBy
-    u = self.dialer
-    "#{u.fname} #{u.lname}"
+    u = self.dialer.displayName
   end
 
 end

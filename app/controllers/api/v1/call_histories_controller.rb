@@ -57,7 +57,7 @@ class Api::V1::CallHistoriesController < Api::V1::ApplicationController
 	end
 
 	def userAttributes
-		{only: [:image, :fname, :lname,:email]}
+		{only: [:image,:displayName,:email]}
 	end
 
 	def checkRatingParams

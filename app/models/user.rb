@@ -23,45 +23,45 @@ class User
   field :proDataStatus, type: Hash
   field :stripeCustomerId, type: String
   field :skillSet, type: Array
+  field :deactivated, type: Boolean, default: false
 
   # For bcrypt-ruby Begin======================
-  field :password_hash, type: String
-  field :password_salt, type: String
+  # field :password_hash, type: String
+  # field :password_salt, type: String
 
-  attr_accessor :password
+  # attr_accessor :password
 
-  before_save :encrypt_password
+  # before_save :encrypt_password
 
-  def self.authenticate(email, password)
-    begin
-      user = find_by(email: email)
-      if user && user.password_hash == BCrypt::Engine.hash_secret(password, user.password_salt)
-        user
-      else
-        nil
-      end
-    rescue Exception => e
-      nil
-    end
-  end
+  # def self.authenticate(email, password)
+  #   begin
+  #     user = find_by(email: email)
+  #     if user && user.password_hash == BCrypt::Engine.hash_secret(password, user.password_salt)
+  #       user
+  #     else
+  #       nil
+  #     end
+  #   rescue Exception => e
+  #     nil
+  #   end
+  # end
 
-  def encrypt_password
-    self.proDataStatus = {displayName: false, details: false, links: false, price: false, subcategories: false}
-    if password.present?
-      self.password_salt = BCrypt::Engine.generate_salt
-      self.password_hash = BCrypt::Engine.hash_secret(password, password_salt)
-    end
-  end
+  # def encrypt_password
+  #   self.proDataStatus = {displayName: false, details: false, links: false, price: false, subcategories: false}
+  #   if password.present?
+  #     self.password_salt = BCrypt::Engine.generate_salt
+  #     self.password_hash = BCrypt::Engine.hash_secret(password, password_salt)
+  #   end
+  # end
   # For bcrypt-ruby End----------------------
 
   # Model Validation Begin===================
   validates :email, presence: true
   validates :email, uniqueness: true
-  validates_presence_of :password, :on => :create
+  # validates_presence_of :password, :on => :create
   # Model Validation End----------------------
 
   # associations
-  has_many :subcategory_users, dependent: :destroy
   has_many :sessions, dependent: :destroy
 
   has_many :dialedCalls, class_name: "CallHistory", inverse_of: :dialer, dependent: :destroy
@@ -78,7 +78,6 @@ class User
   end
 
   def skills
-    # Subcategory.where(:_id.in => self.subcategory_users.pluck(:subcategory_id)).paginate(page: 1, per_page: 3).pluck(:title)
     self.skillSet.to_a.first(3).map { |sks| sks["subcategoryTitle"] }
   end
 

@@ -9,7 +9,7 @@ gem "dynomite"
 
 gem 'mongoid', '~> 7.0.5'
 
-gem 'bcrypt-ruby', :require => 'bcrypt'
+# gem 'bcrypt-ruby', :require => 'bcrypt'
 
 gem 'will_paginate', '~> 3.1.0'
  

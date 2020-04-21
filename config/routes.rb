@@ -29,9 +29,10 @@ Jets.application.routes.draw do
       post "subcategories", to: "profiles#subcategories_list"
       post "pro/details", to: "profiles#proDetails"
       post "pro/ratings", to: "profiles#proRatings"
-
+      post "twilio/verify/caller", to: "profiles#verifyOutgoingCallerId"
+      get "account/deactivate", to: "profiles#deactivate_account"
+      
       # Dashboard Routes
-      post "dashboard/seeker", to: "dashboards#seeker"
       post "dashboard/seeker/categories", to: "dashboards#dashboardCategories"
       post "dashboard/seeker/subcategories", to: "dashboards#dashboardSubCategories"
       post "dashboard/seeker/top", to: "dashboards#dashboardTop"
@@ -41,8 +42,11 @@ Jets.application.routes.draw do
 
       # Call Twillio routes
       post "seeker/place/call", to: "twilios#placeCall"
+      post "seeker/twiml", to: "twilios#twiml"
+      get "seeker/twiml", to: "twilios#twiml"
       post "seeker/calling", to: "twilios#makeCall"
       post "twilio/call/response", to: "twilios#callResponseFromTwillio"
+
 
       # Server Twillio Routes
       get "/accessToken", to: "call_twillios#accessToken"

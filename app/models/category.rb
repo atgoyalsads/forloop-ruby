@@ -4,9 +4,7 @@ class Category
 
   field :title, type: String
 
-  has_many :subcategories, dependent: :destroy
-  has_many :subcategory_users, dependent: :destroy
-  
+  has_many :subcategories, dependent: :destroy  
   validates :title, presence: true
 
   def id

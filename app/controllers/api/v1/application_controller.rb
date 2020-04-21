@@ -23,8 +23,11 @@ class Api::V1::ApplicationController < Jets::Controller::Base
 
 	def validateSession		
 		begin
-			session = Session.find_by(sessionToken: request.headers["sessiontoken"])
-			@user = session.user
+			@session = Session.find_by(sessionToken: request.headers["sessiontoken"])
+			@user = @session.user
+			unless !@user.deactivated
+				render :json =>  {code: 420, message: "Your account has been deactivated"}         
+			end
 		rescue Exception => e
 			render :json =>  {code: 420, message: "Invalid Session Token"}         
 		end
@@ -35,7 +38,7 @@ class Api::V1::ApplicationController < Jets::Controller::Base
 			displayName: (user.displayName.present? or user.image.present?) ,
 			details: (user.fname.present? and user.lname.present? and user.countryCode.present? and user.contact.present? and user.zipcode.present? and user.dob.present? and user.gender.present?) ,
 			links: (user.linkBlogger.present? or user.linkLinkedin.present? or user.linkInstagram.present? or user.linkPinterest.present?) , 
-			subcategories: user.subcategory_users.size>0
+			subcategories: user.skillSet.present?
 		}
 	end
 end

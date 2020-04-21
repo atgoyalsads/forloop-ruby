@@ -8,8 +8,9 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 		begin
 			pro = User.find_by(:_id => params[:proUserId])
 			inFav = Favourite.where(user_id: @user._id, favouriteUserId: pro._id).present?
-			ratings = CallHistory.where(receiverUserId: pro._id, :callRating.gte=>1).order(callRating: "DESC").paginate(page: 1, per_page: 3).as_json(only: [:callReview, :created_at], methods: [:rating, :reviewedBy, :id])
-			questions  = ratings.count>0 ? RatingQuestion.where(call_history_id: ratings[ratings.count-1]["id"]).as_json({only: [:question, :isAnswered]}) : []
+			ratings = CallHistory.where(receiverUserId: pro._id, :callRating.gte=>1).order(updated_at: "DESC").paginate(page: 1, per_page: 3).as_json(only: [:callReview, :created_at], methods: [:rating, :reviewedBy, :id])
+			lastQuestion = pro.rating_questions.last
+			questions  = lastQuestion ? RatingQuestion.where(call_history_id: lastQuestion.call_history_id).as_json({only: [:question, :isAnswered]}) : []
 			render :json =>  {code: 200, user: pro.as_json(proAttributes).merge(inFav: inFav, ratings: ratings, questions: questions)}
 		rescue Exception => e
 			render :json =>  {code: 404, message: "Profile does not exists"}         
@@ -36,7 +37,7 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 				if outgoing_caller_ids.present?
 					render json: {code: 200, message: "Contact verified"}
 				else
-					render json: {code: 100, verificationCode: verificationCall, message: "Contact saved but not verified"}
+					render json: {code: 100, verificationCode: sendCallerIdVerificationCode, message: "Contact saved but not verified"}
 				end
 			else
 		  	render json: {code: 404, message: "Contact does not exists"}
@@ -50,7 +51,7 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	def updateContact
 		@user.set({"updated_at": Time.current, "countryCode": params[:countryCode], "contact": params[:contact]})
 		begin
-	  	render json: {code: 200, verificationCode: verificationCall}
+	  	render json: {code: 200, verificationCode: sendCallerIdVerificationCode}
 		rescue Exception => e
 	  	render json: {code: 404, message: e}
 		end
@@ -85,8 +86,7 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 		subcats = Subcategory.where(:_id.in => params[:subcategories].to_a)
 		addedSubcategories = []
 		subcats.each do |subcat|
-			data = @user.subcategory_users.find_or_create_by(subcategory: subcat,category_id: subcat.category_id)
-			addedSubcategories << {subcategoryId: subcat._id, subcategoryTitle: subcat.title}
+			addedSubcategories << {subcategoryId: subcat._id, subcategoryTitle: subcat.title, categoryTitle: subcat.category.title}
 		end
 		@user.set("updated_at": Time.current, "proDataStatus.subcategories": true, "skillSet": addedSubcategories)
 	  returnUserJson
@@ -103,13 +103,36 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 		end
 	end
 
+	# https://www.twilio.com/docs/verify/api/verification-check
+	def verifyOutgoingCallerId
+		# begin
+			prepareClient
+			vc = @client.verify
+	                  .services(serviceId)
+	                    .verification_checks
+	                      .create(to: "#{@user.countryCode}#{@user.contact}", code: params[:verificationCode])
+
+			puts vc.status
+	  	render json: {code: 200, message: vc.status}
+		# rescue Exception => e
+	 #  	render json: {code: 401, message: e}
+		# end
+
+	end
+
+	def deactivate_account
+		@user.set({"deactivated": true})
+		@session.destroy
+		render :json =>  {code: 200, message: "Your account has been deactivated"}    
+	end
+
 	private
 	def returnUserJson
 	  render json: {code: 200, message: "Record Found", user: @user.as_json(userJson).merge({sessionToken: request.headers["sessiontoken"]})}
 	end
 
 	def userJson
-		{ except:[:created_at,:updated_at,:password_hash,:password_salt,:_id, :skillSet, :stripeCustomerId], methods: [:skillsJson]}
+		{ except:[:created_at,:updated_at,:password_hash,:password_salt,:_id, :skillSet, :stripeCustomerId, :deactivated], methods: [:skillsJson]}
 	end
 
 	def proAttributes
@@ -120,8 +143,28 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 		@client = Twilio::REST::Client.new @@account_sid, @@auth_token
 	end
 
-	def verificationCall
+
+
+
+
+# Support team discussion
+# here's a code sample for starting a verification with SMS:
+# https://www.twilio.com/docs/verify/api/verification?code-sample=code-start-a-verification-with-sms&code-language=Java&code-sdk-version=7.x
+# You'll need to create a verification service first: https://www.twilio.com/docs/verify/api/service
+# to get a list their verification services (starting with VAXXXX) - https://www.twilio.com/docs/verify/api/service#list-all-services
+# verifing on sms
+# service = @client.verify.services.create(friendly_name: 'Forloop')	
+#	serviceId = service.sid	
+# verifyServiceId = serviceId
+# validation_request = @client.verify
+# 	           					.services(serviceId)
+#             						.verifications
+#             							.create(to: "#{@user.countryCode}#{@user.contact}", channel: 'sms')
+#   puts validation_request.inspect
+
+	def sendCallerIdVerificationCode
 		prepareClient
+		# Verifing on call
 		validation_request = @client.validation_requests
                             .create(
                                friendly_name: "#{@user.email}",

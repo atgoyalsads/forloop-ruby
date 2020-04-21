@@ -1,37 +1,13 @@
 class Api::V1::DashboardsController < Api::V1::ApplicationController
 	before_action :validateSession
 
-	def seeker
-		usersCats = SubcategoryUser.distinct(:category_id)
-		categories = Category.where(:_id.in => usersCats).paginate(page: 1, per_page: 4)
-
-		if params[:category_id].present?
-			subcategories = Subcategory.where(category_id: params[:category_id]).paginate(page: 1, per_page: 3)
-		elsif categories.present?
-			subcategories = categories.first.subcategories.paginate(page: 1, per_page: 3)
-		else
-			subcategories = Subcategory.all.paginate(page: 1, per_page: 3)
-		end 
-		
-		subcatsJson = []
-		subcategories.each do |subcat|
-			userIds = subcat.subcategory_users.order(updated_at: "DESC").distinct(:user_id)
-			users = User.where(:_id.in=>userIds).paginate(page: 1, per_page: 3)
-			subcatsJson << subcat.as_json(only: [:title], methods: [:id]).merge(users: users.as_json(userAttributes))
-		end
-		topUids = SubcategoryUser.distinct(:user_id).first(6)
-		topUsers = User.where(:_id.in=>topUids).paginate(page: 1, per_page: 6)
-		result = {categories: categories.as_json(only: [:title], methods: [:id]), subcategories: subcatsJson, top: topUsers.as_json(userAttributes)}
-		render json: {code: 200, result: result}
-	end
-
 	def dashboardCategories
 		categories = Category.all.paginate(page: params[:page], per_page: params[:per_page])
 		render json: {code: 200, categories: categories.as_json(only: [:title], methods: [:id]), total_pages: categories.total_pages}
 	end
 
 	def dashboardSubCategories
-		available = User.where("skillSet"=> {:$exists=>true}).pluck(:skillSet).flatten.map{|s| s["subcategoryId"]}.uniq
+		available = User.where("skillSet"=> {:$exists=>true},  "deactivated": false).pluck(:skillSet).flatten.map{|s| s["subcategoryId"]}.uniq
 		if params[:category_id].present?
 			subcategories = Subcategory.where(category_id: params[:category_id], :_id.in=> available).paginate(page: params[:page], per_page: params[:per_page])
 		else
@@ -39,21 +15,21 @@ class Api::V1::DashboardsController < Api::V1::ApplicationController
 		end
 		subcatsJson = []
 		subcategories.each do |subcat|
-			users = User.where("skillSet.subcategoryId"=> subcat._id).paginate(page: 1, per_page: 3)
+			users = User.where("skillSet.subcategoryId"=> subcat._id, "deactivated": false).paginate(page: 1, per_page: 3)
 			subcatsJson << subcat.as_json(only: [:title], methods: [:id]).merge(users: users.as_json(userAttributes))
 		end
 		render json: {code: 200, subcategories: subcatsJson}
 	end
 
 	def dashboardTop
-		topUsers = User.where("skillSet"=>  {:$exists=>true} ).paginate(page: params[:page], per_page: params[:per_page])
+		topUsers = User.where("skillSet"=>  {:$exists=>true},  "deactivated": false).paginate(page: params[:page], per_page: params[:per_page])
 		render json: {code: 200, top: topUsers.as_json(userAttributes) }
 	end
 
 	def subcategoryUsers
 		begin
 			subcat = Subcategory.find_by(:_id=> params[:subcategory_id])
-			users = User.where("skillSet.subcategoryId"=> subcat._id).paginate(page: params[:page], per_page: params[:per_page])
+			users = User.where("skillSet.subcategoryId"=> subcat._id, "deactivated": false).paginate(page: params[:page], per_page: params[:per_page])
 			render json: {code: 200, users: users.as_json(userAttributes)}
 		rescue Exception => e
 			render json: {code: 200, users: []}
@@ -61,16 +37,13 @@ class Api::V1::DashboardsController < Api::V1::ApplicationController
 	end
 
 	def searchProUsers
-		# begin
-			searchterm = params[:keyword].to_s
-			cats = Category.where({ :title => /.*#{searchterm}.*/i }).paginate(page: 1, per_page: 10).pluck(:id)
-			subcats = Subcategory.any_of({ :title => /.*#{searchterm}.*/i }, :category_id.in => cats).paginate(page: 1, per_page: 10).pluck(:id)
-	  	quids = (subcats.count<5) ? RatingQuestion.where({:question=> /.*#{searchterm}.*/i}).paginate(page: 1, per_page: 10).pluck(:receiverUserId).uniq : []
-	  	users = User.any_of({"skillSet.subcategoryId"=> {:$in => subcats}}, {:fname => /.*#{searchterm}.*/i}, {:lname => /.*#{searchterm}.*/i }, {:_id.in=>quids}).paginate(page: params[:page], per_page: params[:per_page])
-	  	render json: {code: 200, users: users.as_json(userAttributes)}
-		# rescue Exception => e
-	 #  	render json: {code: 401, message: "Category does not exists"}
-		# end
+		searchterm = params[:keyword].to_s
+  	users = User.where("deactivated": false).any_of({"skillSet.subcategoryTitle"=> /.*#{searchterm}.*/i}, {"skillSet.categoryTitle"=> /.*#{searchterm}.*/i}, {:fname => /.*#{searchterm}.*/i}, {:lname => /.*#{searchterm}.*/i }, {:displayName => /.*#{searchterm}.*/i }).paginate(page: params[:page], per_page: params[:per_page])
+  	if !users.present?
+  		uids = RatingQuestion.where({:question=> /.*#{searchterm}.*/i}).distinct(:receiverUserId).paginate(page: params[:page], per_page: params[:per_page])
+  		users = User.where(:_id.in=> uids).paginate(page: params[:page], per_page: params[:per_page])
+  	end
+  	render json: {code: 200, users: users.as_json(userAttributes)}
 	end
 
 	def proDashboard
