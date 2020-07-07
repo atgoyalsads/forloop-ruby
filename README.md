@@ -12,8 +12,6 @@ Things you might want to cover:
 
 
 User.find_by(contact: "6262539743").sessions.destroy_all
-User.find_by(contact: "6262539743").favourites.destroy_all
-User.find_by(contact: "6262539743").in_favourites.destroy_all
 User.find_by(contact: "6262539743").received_rating_questions.destroy_all
 User.find_by(contact: "6262539743").rating_questions.destroy_all
 User.find_by(contact: "6262539743").dialedCalls.destroy_all

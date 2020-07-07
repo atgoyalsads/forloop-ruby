@@ -7,7 +7,7 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	def proDetails
 		begin
 			pro = User.find_by(:_id => params[:proUserId])
-			inFav = Favourite.where(user_id: @user._id, favouriteUserId: pro._id).present?
+			inFav = @user.favourites.to_a.include?(pro._id)
 			ratings = CallHistory.where(receiverUserId: pro._id, :callRating.gte=>1).order(updated_at: "DESC").paginate(page: 1, per_page: 3).as_json(only: [:callReview, :created_at], methods: [:rating, :reviewedBy, :id])
 			lastQuestion = pro.rating_questions.last
 			questions  = lastQuestion ? RatingQuestion.where(call_history_id: lastQuestion.call_history_id).as_json({only: [:question, :isAnswered]}) : []
@@ -132,7 +132,7 @@ class Api::V1::ProfilesController < Api::V1::ApplicationController
 	end
 
 	def userJson
-		{ except:[:created_at,:updated_at,:password_hash,:password_salt,:_id, :skillSet, :stripeCustomerId, :deactivated], methods: [:skillsJson]}
+		{ except:[:created_at,:updated_at,:_id, :skillSet, :stripeCustomerId, :deactivated, :favourites], methods: [:skillsJson]}
 	end
 
 	def proAttributes

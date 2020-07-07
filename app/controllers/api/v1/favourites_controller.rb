@@ -4,12 +4,12 @@ class Api::V1::FavouritesController < Api::V1::ApplicationController
 	def create
 		begin
 			profile = User.find_by(:_id => params[:favouriteUserId])
-			fav = @user.favourites.where(:favouriteUserId => profile._id).first
+			fav = @user.favourites.to_a.include?(profile._id)
 			if fav
-				fav.destroy
+				@user.set({"favourites": @user.favourites.to_a-[profile._id] })
 				render json: {code: 200, status: false}
 			else
-				@user.favourites.create(:favouriteUserId => profile._id)
+				@user.set({"favourites": (@user.favourites.to_a<<profile._id)})
 				render json: {code: 200, status: true}
 			end
 		rescue Exception => e
@@ -18,8 +18,7 @@ class Api::V1::FavouritesController < Api::V1::ApplicationController
 	end
 
 	def list
-		favsUids = @user.favourites.paginate(page: params[:page], per_page: params[:per_page]).pluck(:favouriteUserId)
-		users = User.where(:_id.in=> favsUids)
+		users = User.where(:_id.in=> @user.favourites.to_a).paginate(page: params[:page], per_page: params[:per_page])
 		render json: {code: 200, profiles: users.as_json(only: [:displayName, :image, :description, :pricePerHour], methods: [:id, :skills])}
 	end
 end

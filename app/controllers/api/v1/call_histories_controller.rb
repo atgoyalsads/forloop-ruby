@@ -4,10 +4,10 @@ class Api::V1::CallHistoriesController < Api::V1::ApplicationController
 	before_action :checkRatingParams, only: [:rateCall]
 
 	def callHistory
-
 		if params[:keyword].present?
 			searchterm = params[:keyword].to_s.downcase
-			uids = User.any_of({ :fname => /.*#{searchterm}.*/i }, { :lname => /.*#{searchterm}.*/i }).pluck(:_id)
+			allUids = @user.callHistories.pluck(:dialerUserId, :receiverUserId).flatten.uniq-[@user._id]
+			uids = User.where(:_id.in => allUids).any_of({ :fname => /.*#{searchterm}.*/i }, { :lname => /.*#{searchterm}.*/i }, { :displayName => /.*#{searchterm}.*/i }).pluck(:_id).uniq
 			history = CallHistory.any_of({:dialerUserId => @user._id, :receiverUserId.in => uids}, {:receiverUserId => @user._id, :dialerUserId.in => uids}).order(updated_at: "DESC").paginate(page: params[:page], per_page: params[:per_page])
 		else
 			history = @user.callHistories.order(updated_at: "DESC").paginate(page: params[:page], per_page: params[:per_page])
@@ -30,7 +30,7 @@ class Api::V1::CallHistoriesController < Api::V1::ApplicationController
 			askedQuestions = []
 			params[:questions].each do |quest|
 				@call.rating_questions.create(question: quest[:label], rating: quest[:rating].to_f, isAnswered: !(quest[:isAnswered]==false), receiverUserId: @call.receiverUserId, user_id: @user._id)
-				askedQuestions << {question: quest[:label], rating: quest[:rating].to_f, isAnswered: !(quest[:isAnswered]==false)}
+				askedQuestions << {question: quest[:label], rating: quest[:rating].to_f, isAnswered: !(quest[:isAnswered]==false), receiverUserId: @call.receiverUserId}
 			end
 			@call.set({tip: params[:tip].to_f, callReview: params[:review], callRating: params[:rating], feedbackQuestionAddressed: params[:questionAddressed], feedbackNotLiked: params[:notLiked], feedbackNewFeatures: params[:newFeatures], askedQuestions: askedQuestions})
 			render json: {code: 200, message: "Review added successfully" }

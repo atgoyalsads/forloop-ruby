@@ -24,6 +24,7 @@ class User
   field :stripeCustomerId, type: String
   field :skillSet, type: Array
   field :deactivated, type: Boolean, default: false
+  field :favourites, type: Array
 
   # For bcrypt-ruby Begin======================
   # field :password_hash, type: String
@@ -70,8 +71,6 @@ class User
   has_many :rating_questions, dependent: :destroy
   has_many :received_rating_questions, class_name: "RatingQuestion", inverse_of: :receiver, dependent: :destroy
 
-  has_many :favourites, dependent: :destroy
-  has_many :in_favourites, class_name: "Favourite", inverse_of: :favouriteUser, dependent: :destroy
 
   def id
     self._id.as_json["$oid"]
@@ -91,10 +90,6 @@ class User
 
   def callHistories
     CallHistory.any_of({:dialerUserId => self._id}, {:receiverUserId => self._id})
-  end
-
-  def favouriteProfiles
-    User.where(:_id.in=>self.favourites.pluck(:favouriteUserId))
   end
 
   def callsDataHome
