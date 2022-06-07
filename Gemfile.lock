@@ -98,9 +98,6 @@ GEM
     aws-sigv4 (1.1.0)
       aws-eventstream (~> 1.0, >= 1.0.2)
     aws_config (0.1.0)
-    bcrypt (3.1.13)
-    bcrypt-ruby (3.1.5)
-      bcrypt (>= 3.1.3)
     bson (4.7.0)
     builder (3.2.4)
     byebug (11.0.1)
@@ -174,7 +171,7 @@ GEM
       gems
     jets-html-sanitizer (1.0.4)
       loofah (~> 2.2, >= 2.2.2)
-    jmespath (1.4.0)
+    jmespath (1.6.1)
     json (2.3.0)
     jwt (2.2.1)
     kramdown (2.1.0)
@@ -257,7 +254,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bcrypt-ruby
   byebug
   capybara
   dynomite
